@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>5 Senses Engagement Chart</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 0 20px;
+      text-align: center;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    label {
+      text-align: right;
+      padding-right: 10px;
+    }
+
+    input[type="number"] {
+      width: 60px;
+      text-align: center;
+    }
+
+    button, .export-button {
+      grid-column: span 2;
+      padding: 10px 20px;
+      margin-top: 10px;
+      background-color: #ff6384;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .export-container {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    canvas {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Rate Sensory Engagement (0–10)</h2>
+  <form id="senseForm">
+    <label for="sight">Sight:</label>
+    <input type="number" id="sight" name="sight" min="0" max="10" required />
+
+    <label for="touch">Touch:</label>
+    <input type="number" id="touch" name="touch" min="0" max="10" required />
+
+    <label for="smell">Smell:</label>
+    <input type="number" id="smell" name="smell" min="0" max="10" required />
+
+    <label for="sound">Sound:</label>
+    <input type="number" id="sound" name="sound" min="0" max="10" required />
+
+    <label for="taste">Taste:</label>
+    <input type="number" id="taste" name="taste" min="0" max="10" required />
+
+    <button type="submit">Generate Graph</button>
+  </form>
+
+  <canvas id="sensesChart"></canvas>
+
+  <div class="export-container" style="display:none;" id="exportButtons">
+    <button class="export-button" onclick="exportChart('png')">Export PNG</button>
+    <button class="export-button" onclick="exportChart('jpeg')">Export JPEG</button>
+    <button class="export-button" onclick="exportPDF()">Export PDF</button>
+  </div>
+
+  <script>
+    let chartInstance;
+
+    document.getElementById('senseForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const senses = ['sight', 'touch', 'smell', 'sound', 'taste'];
+      const values = senses.map(sense => parseInt(document.getElementById(sense).value) || 0);
+
+      const ctx = document.getElementById('sensesChart').getContext('2d');
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Sight', 'Touch', 'Smell', 'Sound', 'Taste'],
+          datasets: [{
+            label: 'Engagement Level',
+            data: values,
+            borderColor: 'rgba(255, 99, 132, 0.6)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+            pointRadius: 6,
+            pointHoverRadius: 8,
+            fill: false,
+            tension: 0.3,
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 10,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+
+      document.getElementById('exportButtons').style.display = 'flex';
+    });
+
+    function exportChart(format) {
+      if (!chartInstance) return;
+      const link = document.createElement('a');
+      link.href = chartInstance.toBase64Image(format === 'jpeg' ? 'image/jpeg' : 'image/png');
+      link.download = `senses_chart.${format}`;
+      link.click();
+    }
+
+    async function exportPDF() {
+      if (!chartInstance) return;
+
+      const canvas = document.getElementById('sensesChart');
+      const imgData = canvas.toDataURL('image/png');
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF();
+      pdf.addImage(imgData, 'PNG', 15, 40, 180, 100);
+      pdf.text("5 Senses Engagement Chart", 15, 20);
+      pdf.save("senses_chart.pdf");
+    }
+  </script>
+</body>
+</html>
